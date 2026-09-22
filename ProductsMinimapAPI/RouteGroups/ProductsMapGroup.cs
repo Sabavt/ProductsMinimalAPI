@@ -1,4 +1,5 @@
 ﻿using ProductsMinimapAPI.Models;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
 namespace ProductsMinimapAPI.RouteGroups;
@@ -7,9 +8,9 @@ public static class ProductsMapGroup
 {
     private static List<Product> products = [
             new Product(){ProductName = "Orange", Id = 1},
-    new Product(){ProductName = "Apple", Id = 2},
-    new Product(){ProductName = "Banana", Id = 3}
-            ];
+            new Product(){ProductName = "Apple", Id = 2},
+            new Product(){ProductName = "Banana", Id = 3} 
+    ];
 
     public static RouteGroupBuilder ProductsAPI(this RouteGroupBuilder routeGroup)
     {
@@ -65,6 +66,25 @@ public static class ProductsMapGroup
 
             products.Remove(product);
             return Results.Ok(new { message = "Person deleted" });
+        }).AddEndpointFilter(async (EndpointFilterInvocationContext context, EndpointFilterDelegate next) =>
+        {
+            var product = context.Arguments.OfType<Product>().FirstOrDefault();
+
+            if (product == null)
+            {
+                return Results.BadRequest("Product id not match");
+            }
+
+            var validation = new ValidationContext(product); 
+            List<ValidationResult> validationResults = new List<ValidationResult>();
+            bool isValid = Validator.TryValidateObject(product, validation, validationResults, true);
+
+            if(!isValid)
+            {
+                return Results.BadRequest(new { error = validationResults.FirstOrDefault()?.ErrorMessage });
+            }
+
+            return await next(context);
         });
 
         return routeGroup;
