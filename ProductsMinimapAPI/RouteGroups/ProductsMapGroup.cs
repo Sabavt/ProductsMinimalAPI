@@ -1,4 +1,5 @@
-﻿using ProductsMinimapAPI.Models;
+﻿using ProductsMinimapAPI.EndpointFilters;
+using ProductsMinimapAPI.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
@@ -66,26 +67,7 @@ public static class ProductsMapGroup
 
             products.Remove(product);
             return Results.Ok(new { message = "Person deleted" });
-        }).AddEndpointFilter(async (EndpointFilterInvocationContext context, EndpointFilterDelegate next) =>
-        {
-            var product = context.Arguments.OfType<Product>().FirstOrDefault();
-
-            if (product == null)
-            {
-                return Results.BadRequest("Product id not match");
-            }
-
-            var validation = new ValidationContext(product); 
-            List<ValidationResult> validationResults = new List<ValidationResult>();
-            bool isValid = Validator.TryValidateObject(product, validation, validationResults, true);
-
-            if(!isValid)
-            {
-                return Results.BadRequest(new { error = validationResults.FirstOrDefault()?.ErrorMessage });
-            }
-
-            return await next(context);
-        });
+        }).AddEndpointFilter<DeleteEndpointFilter>();
 
         return routeGroup;
     }
