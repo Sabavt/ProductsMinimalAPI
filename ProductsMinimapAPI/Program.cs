@@ -5,4 +5,4 @@ var app = builder.Build();
 
 var routeGroup = app.MapGroup("/products").ProductsAPI();
  
-app.Run();
+app.Run(); 
